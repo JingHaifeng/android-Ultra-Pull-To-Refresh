@@ -65,7 +65,7 @@ public class RentalsStyleFragment extends TitleBaseFragment {
 
         frame.setPtrHandler(new PtrHandler() {
             @Override
-            public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View header) {
+            public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View target) {
                 return true;
             }
 

@@ -72,8 +72,10 @@ public class WithGridView extends TitleBaseFragment {
             }
 
             @Override
-            public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View header) {
-                return PtrDefaultHandler.checkContentCanBePulledDown(frame, content, header);
+            public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View target) {
+                if (target == mPtrFrame.getHeader())
+                return PtrDefaultHandler.checkContentCanBePulledDown(frame, content, target);
+                else return false;
             }
         });
         // the following are default settings

@@ -71,7 +71,7 @@ public class ViewPagerActivity extends TitleBaseActivity {
         mPtrFrame.disableWhenHorizontalMove(true);
         mPtrFrame.setPtrHandler(new PtrHandler() {
             @Override
-            public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View header) {
+            public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View target) {
                 return mPagerAdapter.checkCanDoRefresh();
             }
 

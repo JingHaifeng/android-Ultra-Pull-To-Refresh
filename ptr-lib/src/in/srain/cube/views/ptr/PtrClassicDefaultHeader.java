@@ -234,9 +234,9 @@ public class PtrClassicDefaultHeader extends FrameLayout implements PtrUIHandler
     @Override
     public void onUIPositionChange(PtrFrameLayout frame, boolean isUnderTouch, byte status, PtrIndicator ptrIndicator) {
 
-        final int mOffsetToRefresh = frame.getOffsetToRefresh();
-        final int currentPos = ptrIndicator.getCurrentPosY();
-        final int lastPos = ptrIndicator.getLastPosY();
+        final int mOffsetToRefresh = Math.abs(frame.getOffsetToRefresh());
+        final int currentPos =  Math.abs(ptrIndicator.getCurrentPosY());
+        final int lastPos =  Math.abs(ptrIndicator.getLastPosY());
 
         if (currentPos < mOffsetToRefresh && lastPos >= mOffsetToRefresh) {
             if (isUnderTouch && status == PtrFrameLayout.PTR_STATUS_PREPARE) {

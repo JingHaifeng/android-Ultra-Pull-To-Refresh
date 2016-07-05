@@ -55,12 +55,17 @@ class PtrUIHandlerHolder implements PtrUIHandler {
         PtrUIHandlerHolder current = holder;
         for (; ; current = current.mNext) {
 
-            // duplicated
-            if (current.containsHeader(handler)) {
-                return;
-            }
             if (current.mNext == null) {
                 break;
+            }
+            // duplicated
+            if (current.mHeaderHandler == null) {
+                current.mHeaderHandler = handler;
+                return;
+            }
+
+            if (current.containsHeader(handler)) {
+                return;
             }
         }
 
@@ -79,24 +84,30 @@ class PtrUIHandlerHolder implements PtrUIHandler {
             return;
         }
         if (null == holder.mFooterHandler) {
-            holder.mHeaderHandler = handler;
+            holder.mFooterHandler = handler;
             return;
         }
 
         PtrUIHandlerHolder current = holder;
         for (; ; current = current.mNext) {
 
-            // duplicated
-            if (current.containsHeader(handler)) {
-                return;
-            }
             if (current.mNext == null) {
                 break;
+            }
+
+            if (current.mFooterHandler == null) {
+                current.mFooterHandler = handler;
+                return;
+            }
+
+            // duplicated
+            if (current.containsFooter(handler)) {
+                return;
             }
         }
 
         PtrUIHandlerHolder newHolder = new PtrUIHandlerHolder();
-        newHolder.mHeaderHandler = handler;
+        newHolder.mFooterHandler = handler;
         current.mNext = newHolder;
     }
 
@@ -106,8 +117,8 @@ class PtrUIHandlerHolder implements PtrUIHandler {
         return new PtrUIHandlerHolder();
     }
 
-    public static PtrUIHandlerHolder removeHandler(PtrUIHandlerHolder head, PtrUIHandler handler) {
-        if (head == null || handler == null || null == head.mHeaderHandler) {
+    public static PtrUIHandlerHolder removeHeaderHandler(PtrUIHandlerHolder head, PtrUIHandler handler) {
+        if (head == null || handler == null) {
             return head;
         }
 
@@ -118,19 +129,59 @@ class PtrUIHandlerHolder implements PtrUIHandler {
             // delete current: link pre to next, unlink next from current;
             // pre will no change, current move to next element;
             if (current.containsHeader(handler)) {
+                current.mHeaderHandler = null;
+                if (current.mFooterHandler == null) {
+                    // current is head
+                    if (pre == null) {
+                        head = current.mNext;
+                        current.mNext = null;
 
-                // current is head
-                if (pre == null) {
+                        current = head;
+                    } else {
 
-                    head = current.mNext;
-                    current.mNext = null;
+                        pre.mNext = current.mNext;
+                        current.mNext = null;
+                        current = pre.mNext;
+                    }
+                }
+            } else {
+                pre = current;
+                current = current.mNext;
+            }
 
-                    current = head;
-                } else {
+        } while (current != null);
 
-                    pre.mNext = current.mNext;
-                    current.mNext = null;
-                    current = pre.mNext;
+        if (head == null) {
+            head = new PtrUIHandlerHolder();
+        }
+        return head;
+    }
+    public static PtrUIHandlerHolder removeFooterHandler(PtrUIHandlerHolder head, PtrUIHandler handler) {
+        if (head == null || handler == null) {
+            return head;
+        }
+
+        PtrUIHandlerHolder current = head;
+        PtrUIHandlerHolder pre = null;
+        do {
+
+            // delete current: link pre to next, unlink next from current;
+            // pre will no change, current move to next element;
+            if (current.containsFooter(handler)) {
+                current.mFooterHandler = null;
+                if (current.mHeaderHandler == null) {
+                    // current is head
+                    if (pre == null) {
+                        head = current.mNext;
+                        current.mNext = null;
+
+                        current = head;
+                    } else {
+
+                        pre.mNext = current.mNext;
+                        current.mNext = null;
+                        current = pre.mNext;
+                    }
                 }
             } else {
                 pre = current;
@@ -149,23 +200,35 @@ class PtrUIHandlerHolder implements PtrUIHandler {
     public void onUIReset(PtrFrameLayout frame) {
         PtrUIHandlerHolder current = this;
         do {
-            final PtrUIHandler handler = current.getHeaderHandler();
-            if (null != handler) {
-                handler.onUIReset(frame);
+            final PtrUIHandler headerHandler = current.getHeaderHandler();
+            final PtrUIHandler footerHandler = current.getFooterHandler();
+            if (frame.getPtrIndicator().isPullDown())
+            if (null != headerHandler) {
+                headerHandler.onUIReset(frame);
+            }
+            if (null != footerHandler) {
+                footerHandler.onUIReset(frame);
             }
         } while ((current = current.mNext) != null);
     }
 
     @Override
     public void onUIRefreshPrepare(PtrFrameLayout frame) {
-        if (!hasHeaderHandler()) {
+        if (!hasHeaderHandler() && !hasFooterHandler()) {
             return;
         }
         PtrUIHandlerHolder current = this;
         do {
-            final PtrUIHandler handler = current.getHeaderHandler();
-            if (null != handler) {
-                handler.onUIRefreshPrepare(frame);
+            final PtrUIHandler headerHandler = current.getHeaderHandler();
+            final PtrUIHandler footerHandler = current.getFooterHandler();
+            if (frame.getPtrIndicator().isPullDown()) {
+                if (null != headerHandler) {
+                    headerHandler.onUIRefreshPrepare(frame);
+                }
+            }else {
+                if (null != footerHandler) {
+                    footerHandler.onUIRefreshPrepare(frame);
+                }
             }
         } while ((current = current.mNext) != null);
     }
@@ -174,9 +237,16 @@ class PtrUIHandlerHolder implements PtrUIHandler {
     public void onUIRefreshBegin(PtrFrameLayout frame) {
         PtrUIHandlerHolder current = this;
         do {
-            final PtrUIHandler handler = current.getHeaderHandler();
-            if (null != handler) {
-                handler.onUIRefreshBegin(frame);
+            final PtrUIHandler headerHandler = current.getHeaderHandler();
+            final PtrUIHandler footerHandler = current.getFooterHandler();
+            if (frame.getPtrIndicator().isPullDown()) {
+                if (null != headerHandler) {
+                    headerHandler.onUIRefreshBegin(frame);
+                }
+            } else {
+                if (null != footerHandler) {
+                    footerHandler.onUIRefreshBegin(frame);
+                }
             }
         } while ((current = current.mNext) != null);
     }
@@ -185,9 +255,16 @@ class PtrUIHandlerHolder implements PtrUIHandler {
     public void onUIRefreshComplete(PtrFrameLayout frame) {
         PtrUIHandlerHolder current = this;
         do {
-            final PtrUIHandler handler = current.getHeaderHandler();
-            if (null != handler) {
-                handler.onUIRefreshComplete(frame);
+            final PtrUIHandler headerHandler = current.getHeaderHandler();
+            final PtrUIHandler footerHandler = current.getFooterHandler();
+            if (frame.getPtrIndicator().isPullDown()) {
+                if (null != headerHandler) {
+                    headerHandler.onUIRefreshComplete(frame);
+                }
+            } else {
+                if (null != footerHandler) {
+                    footerHandler.onUIRefreshComplete(frame);
+                }
             }
         } while ((current = current.mNext) != null);
     }
@@ -196,10 +273,18 @@ class PtrUIHandlerHolder implements PtrUIHandler {
     public void onUIPositionChange(PtrFrameLayout frame, boolean isUnderTouch, byte status, PtrIndicator ptrIndicator) {
         PtrUIHandlerHolder current = this;
         do {
-            final PtrUIHandler handler = current.getHeaderHandler();
-            if (null != handler) {
-                handler.onUIPositionChange(frame, isUnderTouch, status, ptrIndicator);
+            final PtrUIHandler headerHandler = current.getHeaderHandler();
+            final PtrUIHandler footerHandler = current.getFooterHandler();
+            if (ptrIndicator.isPullDown()) {
+                if (null != headerHandler) {
+                    headerHandler.onUIPositionChange(frame, isUnderTouch, status, ptrIndicator);
+                }
+            } else{
+                if (null != footerHandler) {
+                    footerHandler.onUIPositionChange(frame, isUnderTouch, status, ptrIndicator);
+                }
             }
         } while ((current = current.mNext) != null);
     }
+
 }

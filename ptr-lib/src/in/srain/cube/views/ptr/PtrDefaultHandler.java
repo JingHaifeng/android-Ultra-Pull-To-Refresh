@@ -19,21 +19,45 @@ public abstract class PtrDefaultHandler implements PtrHandler {
             return view.canScrollVertically(-1);
         }
     }
+    public static boolean canChildScrollDown(View view) {
+        if (android.os.Build.VERSION.SDK_INT < 14) {
+            if (view instanceof AbsListView) {
+                final AbsListView absListView = (AbsListView) view;
+                final int count = absListView.getCount();
+                final int childCount = absListView.getChildCount();
+                return count > 0
+                        && (absListView.getLastVisiblePosition() < count-1 || absListView.getChildAt(childCount-1)
+                        .getBottom() > absListView.getBottom());
+            } else {
+                return view.getScrollY() > 0;
+            }
+        } else {
+            return view.canScrollVertically(1);
+        }
+    }
 
     /**
      * Default implement for check can perform pull to refresh
      *
      * @param frame
      * @param content
-     * @param header
+     * @param target
      * @return
      */
-    public static boolean checkContentCanBePulledDown(PtrFrameLayout frame, View content, View header) {
-        return !canChildScrollUp(content);
+    public static boolean checkContentCanBePulledDown(PtrFrameLayout frame, View content, View target) {
+        if (frame.isRefreshing()) {
+            return false;
+        }
+        if (frame.getHeaderView() == target) {
+            return !canChildScrollUp(content);
+        } else if (frame.getFooterView() == target){
+            return !canChildScrollDown(content);
+        }
+        return false;
     }
 
     @Override
-    public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View header) {
-        return checkContentCanBePulledDown(frame, content, header);
+    public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View target) {
+        return checkContentCanBePulledDown(frame, content, target);
     }
 }

@@ -77,10 +77,10 @@ public class WithListViewAndEmptyView extends TitleBaseFragment {
         mPtrFrame.setLastUpdateTimeRelateObject(this);
         mPtrFrame.setPtrHandler(new PtrHandler() {
             @Override
-            public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View header) {
+            public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View target) {
 
                 // here check $mListView instead of $content
-                return PtrDefaultHandler.checkContentCanBePulledDown(frame, mListView, header);
+                return PtrDefaultHandler.checkContentCanBePulledDown(frame, mListView, target);
             }
 
             @Override

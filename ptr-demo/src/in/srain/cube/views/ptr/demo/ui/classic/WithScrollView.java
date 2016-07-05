@@ -28,8 +28,8 @@ public class WithScrollView extends TitleBaseFragment {
         mPtrFrame.setLastUpdateTimeRelateObject(this);
         mPtrFrame.setPtrHandler(new PtrHandler() {
             @Override
-            public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View header) {
-                return PtrDefaultHandler.checkContentCanBePulledDown(frame, mScrollView, header);
+            public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View target) {
+                return PtrDefaultHandler.checkContentCanBePulledDown(frame, mScrollView, target);
             }
 
             @Override

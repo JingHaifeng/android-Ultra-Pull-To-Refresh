@@ -97,11 +97,11 @@ public class PtrTensionIndicator extends PtrIndicator {
 
     @Override
     public int getOffsetToKeepHeaderWhileLoading() {
-        return getOffsetToRefresh();
+        return getHeaderOffsetToRefresh();
     }
 
     @Override
-    public int getOffsetToRefresh() {
+    public int getHeaderOffsetToRefresh() {
         return (int) mOneHeight;
     }
 

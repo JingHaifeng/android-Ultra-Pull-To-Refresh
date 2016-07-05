@@ -25,6 +25,7 @@ public class EvenOnlyATextView extends TitleBaseFragment {
         ptrFrame.setHeaderView(header);
         ptrFrame.setFooterView(footer);
         ptrFrame.addPtrUIHeaderHandler(header);
+        ptrFrame.addPtrUIFooterHandler(footer);
         ptrFrame.setPtrHandler(new PtrDefaultHandler() {
             @Override
             public void onRefreshBegin(PtrFrameLayout frame) {
@@ -37,7 +38,7 @@ public class EvenOnlyATextView extends TitleBaseFragment {
             }
 
             @Override
-            public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View header) {
+            public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View target) {
                 return true;
             }
         });

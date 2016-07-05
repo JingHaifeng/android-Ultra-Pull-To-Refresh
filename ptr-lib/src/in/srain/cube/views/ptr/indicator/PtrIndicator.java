@@ -5,7 +5,8 @@ import android.graphics.PointF;
 public class PtrIndicator {
 
     public final static int POS_START = 0;
-    protected int mOffsetToRefresh = 0;
+    protected int mHeaderOffsetToRefresh = 0;
+    protected int mFooterOffsetToRefresh = 0;
     private PointF mPtLastMove = new PointF();
     private float mOffsetX;
     private float mOffsetY;
@@ -16,6 +17,7 @@ public class PtrIndicator {
     private int mPressedPos = 0;
 
     private float mRatioOfHeaderHeightToRefresh = 1.2f;
+    private float mRatioOfFooterHeightToRefresh = 1.2f;
     private float mResistance = 1.7f;
     private boolean mIsUnderTouch = false;
     private int mOffsetToKeepHeaderWhileLoading = -1;
@@ -43,7 +45,7 @@ public class PtrIndicator {
     }
 
     public boolean goDownCrossFinishPosition() {
-        return mCurrentPos >= mRefreshCompleteY;
+        return mCurrentPos != mRefreshCompleteY;
     }
 
     protected void processOnMove(float currentX, float currentY, float offsetX, float offsetY) {
@@ -52,20 +54,38 @@ public class PtrIndicator {
 
     public void setRatioOfHeaderHeightToRefresh(float ratio) {
         mRatioOfHeaderHeightToRefresh = ratio;
-        mOffsetToRefresh = (int) (mHeaderHeight * ratio);
+        mHeaderOffsetToRefresh = (int) (mHeaderHeight * ratio);
+    }
+
+    public void setRatioOfFooterHeightToRefresh(float ratio) {
+        mRatioOfFooterHeightToRefresh = ratio;
+        mFooterOffsetToRefresh = (int) (mFooterHeight * ratio);
     }
 
     public float getRatioOfHeaderToHeightRefresh() {
         return mRatioOfHeaderHeightToRefresh;
     }
 
-    public int getOffsetToRefresh() {
-        return mOffsetToRefresh;
+    public float getRatioOfFooterHeightToRefresh() {
+        return mRatioOfFooterHeightToRefresh;
     }
 
-    public void setOffsetToRefresh(int offset) {
+    public int getHeaderOffsetToRefresh() {
+        return mHeaderOffsetToRefresh;
+    }
+
+    public int getFooterOffsetToRefresh() {
+        return mFooterOffsetToRefresh;
+    }
+
+    public void setHeaderOffsetToRefresh(int offset) {
         mRatioOfHeaderHeightToRefresh = mHeaderHeight * 1f / offset;
-        mOffsetToRefresh = offset;
+        mHeaderOffsetToRefresh = offset;
+    }
+
+    public void setFooterOffsetToRefresh(int offset) {
+        mRatioOfFooterHeightToRefresh = mHeaderHeight * 1f / offset;
+        mFooterOffsetToRefresh = offset;
     }
 
     public void onPressDown(float x, float y) {
@@ -133,7 +153,8 @@ public class PtrIndicator {
     }
 
     protected void updateHeight() {
-        mOffsetToRefresh = (int) (mRatioOfHeaderHeightToRefresh * mHeaderHeight);
+        mHeaderOffsetToRefresh = (int) (mRatioOfHeaderHeightToRefresh * mHeaderHeight);
+        mFooterOffsetToRefresh = (int) (mRatioOfFooterHeightToRefresh * mFooterHeight);
     }
 
     public void convertFrom(PtrIndicator ptrSlider) {
@@ -155,7 +176,11 @@ public class PtrIndicator {
     }
 
     public boolean isOverOffsetToRefresh() {
-        return mCurrentPos >= getOffsetToRefresh();
+        if (mCurrentPos > 0) {
+            return mCurrentPos >= getHeaderOffsetToRefresh();
+        } else {
+            return Math.abs(mCurrentPos) >= getFooterOffsetToRefresh();
+        }
     }
 
     public boolean hasMovedAfterPressedDown() {
@@ -166,16 +191,24 @@ public class PtrIndicator {
         return mCurrentPos == POS_START;
     }
 
-    public boolean crossRefreshLineFromTopToBottom() {
-        return mLastPos < getOffsetToRefresh() && mCurrentPos >= getOffsetToRefresh();
+    public boolean crossRefreshLine() {
+        if (mCurrentPos > 0) {
+            return mLastPos < getHeaderOffsetToRefresh() && mCurrentPos >= getHeaderOffsetToRefresh();
+        } else {
+            return Math.abs(mLastPos) < getFooterOffsetToRefresh() && Math.abs(mCurrentPos) >= getFooterOffsetToRefresh();
+        }
     }
 
-    public boolean hasJustReachedHeaderHeightFromTopToBottom() {
-        return mLastPos < mHeaderHeight && mCurrentPos >= mHeaderHeight;
+    public boolean hasJustReachedHeight() {
+        if (mCurrentPos > 0) {
+            return mLastPos < getHeaderOffsetToRefresh() && mCurrentPos >= mHeaderHeight;
+        } else {
+            return Math.abs(mLastPos) < getFooterOffsetToRefresh() && Math.abs(mCurrentPos) >= mFooterHeight;
+        }
     }
 
     public boolean isOverOffsetToKeepHeaderWhileLoading() {
-        return mCurrentPos > getOffsetToKeepHeaderWhileLoading();
+        return Math.abs(mCurrentPos) > getOffsetToKeepHeaderWhileLoading();
     }
 
     public void setOffsetToKeepHeaderWhileLoading(int offset) {
@@ -184,7 +217,8 @@ public class PtrIndicator {
 
     public int getOffsetToKeepHeaderWhileLoading() {
         return mOffsetToKeepHeaderWhileLoading >= 0 ? mOffsetToKeepHeaderWhileLoading :
-                mHeaderHeight;
+                mCurrentPos > 0 ?
+                mHeaderHeight : -mFooterHeight;
     }
 
     public boolean isAlreadyHere(int to) {
@@ -212,5 +246,9 @@ public class PtrIndicator {
 
     public boolean isMoveUp() {
         return mOffsetY < 0;
+    }
+
+    public boolean isPullDown() {
+        return mLastPos > 0 || mCurrentPos > 0;
     }
 }

@@ -9,7 +9,7 @@ public interface PtrHandler {
      * <p/>
      * {@link in.srain.cube.views.ptr.PtrDefaultHandler#checkContentCanBePulledDown}
      */
-    public boolean checkCanDoRefresh(final PtrFrameLayout frame, final View content, final View header);
+    public boolean checkCanDoRefresh(final PtrFrameLayout frame, final View content, final View target);
 
     /**
      * When refresh begin
