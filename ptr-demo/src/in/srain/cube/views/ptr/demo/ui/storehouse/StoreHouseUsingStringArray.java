@@ -44,7 +44,7 @@ public class StoreHouseUsingStringArray extends TitleBaseFragment {
 
         frame.setDurationToCloseHeader(1500);
         frame.setHeaderView(header);
-        frame.addPtrUIHandler(header);
+        frame.addPtrUIHeaderHandler(header);
         frame.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -53,7 +53,7 @@ public class StoreHouseUsingStringArray extends TitleBaseFragment {
         }, 100);
 
         // change header after loaded
-        frame.addPtrUIHandler(new PtrUIHandler() {
+        frame.addPtrUIHeaderHandler(new PtrUIHandler() {
 
             private int mLoadTime = 0;
 

@@ -57,7 +57,7 @@ public class MaterialStyleFragment extends TitleBaseFragment {
         mPtrFrameLayout.setLoadingMinTime(1000);
         mPtrFrameLayout.setDurationToCloseHeader(1500);
         mPtrFrameLayout.setHeaderView(header);
-        mPtrFrameLayout.addPtrUIHandler(header);
+        mPtrFrameLayout.addPtrUIHeaderHandler(header);
         mPtrFrameLayout.postDelayed(new Runnable() {
             @Override
             public void run() {

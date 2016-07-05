@@ -46,7 +46,7 @@ public class StoreHouseUsingPointList extends TitleBaseFragment {
 
         frame.setDurationToCloseHeader(3000);
         frame.setHeaderView(header);
-        frame.addPtrUIHandler(header);
+        frame.addPtrUIHeaderHandler(header);
         frame.postDelayed(new Runnable() {
             @Override
             public void run() {

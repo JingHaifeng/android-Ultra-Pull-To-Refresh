@@ -12,6 +12,7 @@ public class PtrIndicator {
     private int mCurrentPos = 0;
     private int mLastPos = 0;
     private int mHeaderHeight;
+    private int mFooterHeight;
     private int mPressedPos = 0;
 
     private float mRatioOfHeaderHeightToRefresh = 1.2f;
@@ -123,6 +124,14 @@ public class PtrIndicator {
         updateHeight();
     }
 
+    public int getFooterHeight() {
+        return mFooterHeight;
+    }
+
+    public void setFooterHeight(int footerHeight) {
+        mFooterHeight = footerHeight;
+    }
+
     protected void updateHeight() {
         mOffsetToRefresh = (int) (mRatioOfHeaderHeightToRefresh * mHeaderHeight);
     }
@@ -134,7 +143,7 @@ public class PtrIndicator {
     }
 
     public boolean hasLeftStartPosition() {
-        return mCurrentPos > POS_START;
+        return mCurrentPos != POS_START;
     }
 
     public boolean hasJustLeftStartPosition() {
@@ -174,7 +183,8 @@ public class PtrIndicator {
     }
 
     public int getOffsetToKeepHeaderWhileLoading() {
-        return mOffsetToKeepHeaderWhileLoading >= 0 ? mOffsetToKeepHeaderWhileLoading : mHeaderHeight;
+        return mOffsetToKeepHeaderWhileLoading >= 0 ? mOffsetToKeepHeaderWhileLoading :
+                mHeaderHeight;
     }
 
     public boolean isAlreadyHere(int to) {
@@ -191,7 +201,16 @@ public class PtrIndicator {
         return currentPercent;
     }
 
+    @Deprecated
     public boolean willOverTop(int to) {
         return to < POS_START;
+    }
+
+    public boolean isMoveDown() {
+        return mOffsetY > 0;
+    }
+
+    public boolean isMoveUp() {
+        return mOffsetY < 0;
     }
 }

@@ -36,18 +36,21 @@ public class PtrFrameLayout extends ViewGroup {
     // optional config for define header and content in xml file
     private int mHeaderId = 0;
     private int mContainerId = 0;
+    private int mFooterId = 0;
     // config
     private int mDurationToClose = 200;
     private int mDurationToCloseHeader = 1000;
     private boolean mKeepHeaderWhenRefresh = true;
     private boolean mPullToRefresh = false;
     private View mHeaderView;
+    private View mFooterView;
     private PtrUIHandlerHolder mPtrUIHandlerHolder = PtrUIHandlerHolder.create();
     private PtrHandler mPtrHandler;
     // working parameters
     private ScrollChecker mScrollChecker;
     private int mPagingTouchSlop;
     private int mHeaderHeight;
+    private int mFooterHeight;
     private boolean mDisableWhenHorizontalMove = false;
     private int mFlag = 0x00;
 
@@ -113,43 +116,32 @@ public class PtrFrameLayout extends ViewGroup {
     @Override
     protected void onFinishInflate() {
         final int childCount = getChildCount();
-        if (childCount > 2) {
-            throw new IllegalStateException("PtrFrameLayout can only contains 2 children");
-        } else if (childCount == 2) {
+        if (childCount > 3) {
+            throw new IllegalStateException("PtrFrameLayout can only contains 3 children");
+        } else if (childCount == 3) {
             if (mHeaderId != 0 && mHeaderView == null) {
                 mHeaderView = findViewById(mHeaderId);
             }
             if (mContainerId != 0 && mContent == null) {
                 mContent = findViewById(mContainerId);
             }
+            if (mFooterId != 0 && mFooterView == null) {
+                mFooterView = findViewById(mFooterId);
+            }
 
             // not specify header or content
-            if (mContent == null || mHeaderView == null) {
+            if (mContent == null || mHeaderView == null || mFooterView == null) {
 
                 View child1 = getChildAt(0);
                 View child2 = getChildAt(1);
-                if (child1 instanceof PtrUIHandler) {
-                    mHeaderView = child1;
-                    mContent = child2;
-                } else if (child2 instanceof PtrUIHandler) {
-                    mHeaderView = child2;
-                    mContent = child1;
-                } else {
-                    // both are not specified
-                    if (mContent == null && mHeaderView == null) {
-                        mHeaderView = child1;
-                        mContent = child2;
-                    }
-                    // only one is specified
-                    else {
-                        if (mHeaderView == null) {
-                            mHeaderView = mContent == child1 ? child2 : child1;
-                        } else {
-                            mContent = mHeaderView == child1 ? child2 : child1;
-                        }
-                    }
-                }
+                View child3 = getChildAt(2);
+                mHeaderView = child1;
+                mContent = child2;
+                mFooterView = child3;
             }
+        } else if (childCount == 2) {
+            mHeaderView = getChildAt(0);
+            mContent = getChildAt(1);
         } else if (childCount == 1) {
             mContent = getChildAt(0);
         } else {
@@ -164,6 +156,9 @@ public class PtrFrameLayout extends ViewGroup {
         }
         if (mHeaderView != null) {
             mHeaderView.bringToFront();
+        }
+        if (mFooterView != null) {
+            mFooterView.bringToFront();
         }
         super.onFinishInflate();
     }
@@ -208,6 +203,13 @@ public class PtrFrameLayout extends ViewGroup {
                 PtrCLog.d(LOG_TAG, "onMeasure, currentPos: %s, lastPos: %s, top: %s",
                         mPtrIndicator.getCurrentPosY(), mPtrIndicator.getLastPosY(), mContent.getTop());
             }
+        }
+
+        if (mFooterView != null) {
+            measureChildWithMargins(mFooterView, widthMeasureSpec, 0, heightMeasureSpec, 0);
+            MarginLayoutParams lp = (MarginLayoutParams) mFooterView.getLayoutParams();
+            mFooterHeight = mFooterView.getMeasuredHeight() + lp.topMargin + lp.bottomMargin;
+            mPtrIndicator.setFooterHeight(mFooterHeight);
         }
     }
 
@@ -260,6 +262,19 @@ public class PtrFrameLayout extends ViewGroup {
             }
             mContent.layout(left, top, right, bottom);
         }
+
+        if (mFooterView != null) {
+            MarginLayoutParams lp = (MarginLayoutParams) mFooterView.getLayoutParams();
+            final int left = paddingLeft + lp.leftMargin;
+            // enhance readability(header is layout above screen when first init)
+            final int top = getBottom();
+            final int right = left + mFooterView.getMeasuredWidth();
+            final int bottom = top + mFooterView.getMeasuredHeight();
+            mFooterView.layout(left, top, right, bottom);
+            if (isDebug()) {
+                PtrCLog.d(LOG_TAG, "onLayout header: %s %s %s %s", left, top, right, bottom);
+            }
+        }
     }
 
     @SuppressWarnings({"PointlessBooleanExpression", "ConstantConditions"})
@@ -273,7 +288,7 @@ public class PtrFrameLayout extends ViewGroup {
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent e) {
-        if (!isEnabled() || mContent == null || mHeaderView == null) {
+        if (!isEnabled() || mContent == null || (mHeaderView == null && mFooterView == null)) {
             return dispatchTouchEventSupper(e);
         }
         int action = e.getAction();
@@ -323,21 +338,24 @@ public class PtrFrameLayout extends ViewGroup {
                     return dispatchTouchEventSupper(e);
                 }
 
-                boolean moveDown = offsetY > 0;
-                boolean moveUp = !moveDown;
-                boolean canMoveUp = mPtrIndicator.hasLeftStartPosition();
+                boolean moveDown = mPtrIndicator.isMoveDown();
+                boolean moveUp = mPtrIndicator.isMoveUp();
 
-                if (DEBUG) {
-                    boolean canMoveDown = mPtrHandler != null && mPtrHandler.checkCanDoRefresh(this, mContent, mHeaderView);
-                    PtrCLog.v(LOG_TAG, "ACTION_MOVE: offsetY:%s, currentPos: %s, moveUp: %s, canMoveUp: %s, moveDown: %s: canMoveDown: %s", offsetY, mPtrIndicator.getCurrentPosY(), moveUp, canMoveUp, moveDown, canMoveDown);
-                }
+//                if (DEBUG) {
+//                    boolean canMoveDown = mPtrHandler != null && mPtrHandler.checkCanDoRefresh(this, mContent, mHeaderView);
+//                    PtrCLog.v(LOG_TAG, "ACTION_MOVE: offsetY:%s, currentPos: %s, moveUp: %s, canMoveUp: %s, moveDown: %s: canMoveDown: %s", offsetY, mPtrIndicator.getCurrentPosY(), moveUp, canMoveUp, moveDown, canMoveDown);
+//                }
 
                 // disable move when header not reach top
                 if (moveDown && mPtrHandler != null && !mPtrHandler.checkCanDoRefresh(this, mContent, mHeaderView)) {
                     return dispatchTouchEventSupper(e);
                 }
 
-                if ((moveUp && canMoveUp) || moveDown) {
+                if (moveUp && mPtrHandler != null && !mPtrHandler.checkCanDoRefresh(this,mContent,mFooterView)) {
+                    return dispatchTouchEventSupper(e);
+                }
+
+                if (moveUp || moveDown) {
                     movePos(offsetY);
                     return true;
                 }
@@ -346,28 +364,31 @@ public class PtrFrameLayout extends ViewGroup {
     }
 
     /**
-     * if deltaY > 0, move the content down
+     * if deltaY != 0, move the content up or down
      *
      * @param deltaY
      */
     private void movePos(float deltaY) {
-        // has reached the top
-        if ((deltaY < 0 && mPtrIndicator.isInStartPosition())) {
-            if (DEBUG) {
-                PtrCLog.e(LOG_TAG, String.format("has reached the top"));
-            }
+        if (deltaY == 0) {
             return;
         }
+        // has reached the top
+//        if ((deltaY < 0 && mPtrIndicator.isInStartPosition())) {
+//            if (DEBUG) {
+//                PtrCLog.e(LOG_TAG, String.format("has reached the top"));
+//            }
+//            return;
+//        }
 
         int to = mPtrIndicator.getCurrentPosY() + (int) deltaY;
 
         // over top
-        if (mPtrIndicator.willOverTop(to)) {
-            if (DEBUG) {
-                PtrCLog.e(LOG_TAG, String.format("over top"));
-            }
-            to = PtrIndicator.POS_START;
-        }
+//        if (mPtrIndicator.willOverTop(to)) {
+//            if (DEBUG) {
+//                PtrCLog.e(LOG_TAG, String.format("over top"));
+//            }
+//            to = PtrIndicator.POS_START;
+//        }
 
         mPtrIndicator.setCurrentPos(to);
         int change = to - mPtrIndicator.getLastPosY();
@@ -432,7 +453,7 @@ public class PtrFrameLayout extends ViewGroup {
         }
         invalidate();
 
-        if (mPtrUIHandlerHolder.hasHandler()) {
+        if (mPtrUIHandlerHolder.hasHeaderHandler()) {
             mPtrUIHandlerHolder.onUIPositionChange(this, isUnderTouch, mStatus, mPtrIndicator);
         }
         onPositionChange(isUnderTouch, mStatus, mPtrIndicator);
@@ -535,7 +556,7 @@ public class PtrFrameLayout extends ViewGroup {
 
     private void performRefresh() {
         mLoadingStartTime = System.currentTimeMillis();
-        if (mPtrUIHandlerHolder.hasHandler()) {
+        if (mPtrUIHandlerHolder.hasHeaderHandler()) {
             mPtrUIHandlerHolder.onUIRefreshBegin(this);
             if (DEBUG) {
                 PtrCLog.i(LOG_TAG, "PtrUIHandler: onUIRefreshBegin");
@@ -551,7 +572,7 @@ public class PtrFrameLayout extends ViewGroup {
      */
     private boolean tryToNotifyReset() {
         if ((mStatus == PTR_STATUS_COMPLETE || mStatus == PTR_STATUS_PREPARE) && mPtrIndicator.isInStartPosition()) {
-            if (mPtrUIHandlerHolder.hasHandler()) {
+            if (mPtrUIHandlerHolder.hasHeaderHandler()) {
                 mPtrUIHandlerHolder.onUIReset(this);
                 if (DEBUG) {
                     PtrCLog.i(LOG_TAG, "PtrUIHandler: onUIReset");
@@ -654,7 +675,7 @@ public class PtrFrameLayout extends ViewGroup {
             mRefreshCompleteHook.takeOver();
             return;
         }
-        if (mPtrUIHandlerHolder.hasHandler()) {
+        if (mPtrUIHandlerHolder.hasHeaderHandler()) {
             if (DEBUG) {
                 PtrCLog.i(LOG_TAG, "PtrUIHandler: onUIRefreshComplete");
             }
@@ -687,7 +708,7 @@ public class PtrFrameLayout extends ViewGroup {
         mFlag |= atOnce ? FLAG_AUTO_REFRESH_AT_ONCE : FLAG_AUTO_REFRESH_BUT_LATER;
 
         mStatus = PTR_STATUS_PREPARE;
-        if (mPtrUIHandlerHolder.hasHandler()) {
+        if (mPtrUIHandlerHolder.hasHeaderHandler()) {
             mPtrUIHandlerHolder.onUIRefreshPrepare(this);
             if (DEBUG) {
                 PtrCLog.i(LOG_TAG, "PtrUIHandler: onUIRefreshPrepare, mFlag %s", mFlag);
@@ -778,8 +799,12 @@ public class PtrFrameLayout extends ViewGroup {
         mPtrHandler = ptrHandler;
     }
 
-    public void addPtrUIHandler(PtrUIHandler ptrUIHandler) {
-        PtrUIHandlerHolder.addHandler(mPtrUIHandlerHolder, ptrUIHandler);
+    public void addPtrUIHeaderHandler(PtrUIHandler ptrUIHandler) {
+        PtrUIHandlerHolder.addHeaderHandler(mPtrUIHandlerHolder, ptrUIHandler);
+    }
+
+    public void addPtrUIFooterHandler(PtrUIHandler ptrUIHandler) {
+        PtrUIHandlerHolder.addHeaderHandler(mPtrUIHandlerHolder, ptrUIHandler);
     }
 
     @SuppressWarnings({"unused"})
@@ -881,6 +906,11 @@ public class PtrFrameLayout extends ViewGroup {
         return mHeaderView;
     }
 
+    @SuppressWarnings({"unused"})
+    public View getFooterView() {
+        return mFooterView;
+    }
+
     public void setHeaderView(View header) {
         if (mHeaderView != null && header != null && mHeaderView != header) {
             removeView(mHeaderView);
@@ -892,6 +922,19 @@ public class PtrFrameLayout extends ViewGroup {
         }
         mHeaderView = header;
         addView(header);
+    }
+
+    public void setFooterView(View footer) {
+        if (mFooterView != null && footer != null && mFooterView != footer) {
+            removeView(mFooterView);
+        }
+        ViewGroup.LayoutParams lp = footer.getLayoutParams();
+        if (lp == null) {
+            lp = new LayoutParams(-1, -2);
+            footer.setLayoutParams(lp);
+        }
+        mFooterView = footer;
+        addView(footer);
     }
 
     @Override

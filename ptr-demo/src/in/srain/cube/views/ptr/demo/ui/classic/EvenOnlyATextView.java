@@ -5,7 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import in.srain.cube.mints.base.TitleBaseFragment;
-import in.srain.cube.views.ptr.PtrClassicFrameLayout;
+import in.srain.cube.views.ptr.PtrClassicDefaultHeader;
 import in.srain.cube.views.ptr.PtrDefaultHandler;
 import in.srain.cube.views.ptr.PtrFrameLayout;
 import in.srain.cube.views.ptr.demo.R;
@@ -18,8 +18,13 @@ public class EvenOnlyATextView extends TitleBaseFragment {
 
         final View contentView = inflater.inflate(R.layout.fragment_classic_header_with_textview, container, false);
 
-        final PtrClassicFrameLayout ptrFrame = (PtrClassicFrameLayout) contentView.findViewById(R.id.fragment_rotate_header_with_text_view_frame);
-        ptrFrame.setLastUpdateTimeRelateObject(this);
+        final PtrFrameLayout ptrFrame = (PtrFrameLayout) contentView.findViewById(R.id.fragment_rotate_header_with_text_view_frame);
+//        ptrFrame.setLastUpdateTimeRelateObject(this);
+        PtrClassicDefaultHeader header = new PtrClassicDefaultHeader(getContext());
+        PtrClassicDefaultHeader footer = new PtrClassicDefaultHeader(getContext());
+        ptrFrame.setHeaderView(header);
+        ptrFrame.setFooterView(footer);
+        ptrFrame.addPtrUIHeaderHandler(header);
         ptrFrame.setPtrHandler(new PtrDefaultHandler() {
             @Override
             public void onRefreshBegin(PtrFrameLayout frame) {

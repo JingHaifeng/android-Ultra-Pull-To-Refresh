@@ -46,7 +46,7 @@ public class StoreHouseUsingString extends TitleBaseFragment {
         setHeaderTitle(mTitlePre + mStringList[0]);
 
         // for changing string
-        frame.addPtrUIHandler(new PtrUIHandler() {
+        frame.addPtrUIHeaderHandler(new PtrUIHandler() {
 
             private int mLoadTime = 0;
 
@@ -81,7 +81,7 @@ public class StoreHouseUsingString extends TitleBaseFragment {
 
         frame.setDurationToCloseHeader(3000);
         frame.setHeaderView(header);
-        frame.addPtrUIHandler(header);
+        frame.addPtrUIHeaderHandler(header);
         frame.postDelayed(new Runnable() {
             @Override
             public void run() {

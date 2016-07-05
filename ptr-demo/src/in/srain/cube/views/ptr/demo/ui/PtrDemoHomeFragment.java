@@ -218,7 +218,7 @@ public class PtrDemoHomeFragment extends BlockMenuFragment {
 
         ptrFrameLayout.setDurationToCloseHeader(1500);
         ptrFrameLayout.setHeaderView(header);
-        ptrFrameLayout.addPtrUIHandler(header);
+        ptrFrameLayout.addPtrUIHeaderHandler(header);
         ptrFrameLayout.setPtrHandler(new PtrHandler() {
             @Override
             public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View header) {
