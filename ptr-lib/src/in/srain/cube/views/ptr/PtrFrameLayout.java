@@ -19,9 +19,13 @@ public class PtrFrameLayout extends ViewGroup {
     // status enum
     public final static byte PTR_STATUS_INIT = 1;
     private byte mStatus = PTR_STATUS_INIT;
-    public final static byte PTR_STATUS_PREPARE = 2;
-    public final static byte PTR_STATUS_LOADING = 3;
-    public final static byte PTR_STATUS_COMPLETE = 4;
+    public final static byte PTR_STATUS_PREPARE_HEADER = 2;
+    public final static byte PTR_STATUS_LOADING_HEADER = 3;
+    public final static byte PTR_STATUS_COMPLETE_HEADER = 4;
+    public final static byte PTR_STATUS_PREPARE_FOOTER = 5;
+    public final static byte PTR_STATUS_LOADING_FOOTER = 6;
+    public final static byte PTR_STATUS_COMPLETE_FOOTER = 7;
+
     private static final boolean DEBUG_LAYOUT = true;
     public static boolean DEBUG = false;
     private static int ID = 1;
@@ -410,9 +414,27 @@ public class PtrFrameLayout extends ViewGroup {
 
         // leave initiated position or just refresh complete
         if ((mPtrIndicator.hasJustLeftStartPosition() && mStatus == PTR_STATUS_INIT) ||
-                (mPtrIndicator.goDownCrossFinishPosition() && mStatus == PTR_STATUS_COMPLETE && isEnabledNextPtrAtOnce())) {
-
-            mStatus = PTR_STATUS_PREPARE;
+                (mPtrIndicator.goDownCrossFinishPosition() &&
+                 (mStatus == PTR_STATUS_COMPLETE_HEADER && mStatus == PTR_STATUS_COMPLETE_FOOTER) &&
+                 isEnabledNextPtrAtOnce())) {
+            switch (mStatus) {
+                case PTR_STATUS_INIT:{
+                    if (mPtrIndicator.hasJustPullDown()) {
+                        mStatus = PTR_STATUS_PREPARE_HEADER;
+                    } else if (mPtrIndicator.hasJustPullUp()){
+                        mStatus = PTR_STATUS_PREPARE_FOOTER;
+                    }
+                }
+                break;
+                case PTR_STATUS_COMPLETE_HEADER:{
+                    mStatus = PTR_STATUS_PREPARE_HEADER;
+                }
+                break;
+                case PTR_STATUS_COMPLETE_FOOTER:{
+                    mStatus = PTR_STATUS_PREPARE_FOOTER;
+                }
+                break;
+            }
             mPtrUIHandlerHolder.onUIRefreshPrepare(this);
             if (DEBUG) {
                 PtrCLog.i(LOG_TAG, "PtrUIHandler: onUIRefreshPrepare, mFlag %s", mFlag);
@@ -429,14 +451,25 @@ public class PtrFrameLayout extends ViewGroup {
             }
         }
 
-        // Pull to Refresh
-        if (mStatus == PTR_STATUS_PREPARE) {
+        // Pull down to Refresh
+        if (mStatus == PTR_STATUS_PREPARE_HEADER) {
             // reach fresh height while moving from top to bottom
             if (isUnderTouch && !isAutoRefresh() && mPullToRefresh
                     && mPtrIndicator.crossRefreshLine()) {
                 tryToPerformRefresh();
             }
             // reach header height while auto refresh
+            if (performAutoRefreshButLater() && mPtrIndicator.hasJustReachedHeight()) {
+                tryToPerformRefresh();
+            }
+        }
+
+        // Pull up to Refresh
+        if (mStatus == PTR_STATUS_PREPARE_FOOTER) {
+            if (isUnderTouch && mPtrIndicator.crossRefreshLine()) {
+                tryToPerformRefresh();
+            }
+
             if (performAutoRefreshButLater() && mPtrIndicator.hasJustReachedHeight()) {
                 tryToPerformRefresh();
             }
@@ -476,7 +509,8 @@ public class PtrFrameLayout extends ViewGroup {
 
         tryToPerformRefresh();
 
-        if (mStatus == PTR_STATUS_LOADING) {
+        if (mStatus == PTR_STATUS_LOADING_HEADER ||
+                mStatus == PTR_STATUS_LOADING_FOOTER) {
             // keep header for fresh
             if (mKeepHeaderWhenRefresh) {
                 // scroll header back
@@ -489,7 +523,8 @@ public class PtrFrameLayout extends ViewGroup {
                 tryScrollBackToTopWhileLoading();
             }
         } else {
-            if (mStatus == PTR_STATUS_COMPLETE) {
+            if (mStatus == PTR_STATUS_COMPLETE_HEADER ||
+                    mStatus == PTR_STATUS_COMPLETE_FOOTER) {
                 notifyUIRefreshComplete(false);
             } else {
                 tryScrollBackToTopAbortRefresh();
@@ -547,13 +582,18 @@ public class PtrFrameLayout extends ViewGroup {
     }
 
     private boolean tryToPerformRefresh() {
-        if (mStatus != PTR_STATUS_PREPARE) {
+        if (mStatus != PTR_STATUS_PREPARE_HEADER &&
+                mStatus != PTR_STATUS_PREPARE_FOOTER) {
             return false;
         }
 
         //
         if ((mPtrIndicator.isOverOffsetToKeepHeaderWhileLoading() && isAutoRefresh()) || mPtrIndicator.isOverOffsetToRefresh()) {
-            mStatus = PTR_STATUS_LOADING;
+            if (mStatus == PTR_STATUS_PREPARE_HEADER) {
+                mStatus = PTR_STATUS_LOADING_HEADER;
+            } else {
+                mStatus = PTR_STATUS_LOADING_FOOTER;
+            }
             performRefresh();
         }
         return false;
@@ -576,7 +616,11 @@ public class PtrFrameLayout extends ViewGroup {
      * If at the top and not in loading, reset
      */
     private boolean tryToNotifyReset() {
-        if ((mStatus == PTR_STATUS_COMPLETE || mStatus == PTR_STATUS_PREPARE) && mPtrIndicator.isInStartPosition()) {
+        if ((mStatus == PTR_STATUS_COMPLETE_HEADER ||
+             mStatus == PTR_STATUS_COMPLETE_FOOTER ||
+             mStatus == PTR_STATUS_PREPARE_HEADER ||
+             mStatus== PTR_STATUS_PREPARE_FOOTER)
+            && mPtrIndicator.isInStartPosition()) {
 //            if (mPtrUIHandlerHolder.hasHeaderHandler()) {
 //                mPtrUIHandlerHolder.onUIReset(this);
 //                if (DEBUG) {
@@ -616,7 +660,8 @@ public class PtrFrameLayout extends ViewGroup {
      * @return
      */
     public boolean isRefreshing() {
-        return mStatus == PTR_STATUS_LOADING;
+        return mStatus == PTR_STATUS_LOADING_HEADER ||
+                mStatus == PTR_STATUS_LOADING_FOOTER;
     }
 
     /**
@@ -650,7 +695,11 @@ public class PtrFrameLayout extends ViewGroup {
      * Do refresh complete work when time elapsed is greater than {@link #mLoadingMinTime}
      */
     private void performRefreshComplete() {
-        mStatus = PTR_STATUS_COMPLETE;
+        if (mStatus == PTR_STATUS_LOADING_HEADER) {
+            mStatus = PTR_STATUS_COMPLETE_HEADER;
+        } else {
+            mStatus = PTR_STATUS_COMPLETE_FOOTER;
+        }
 
         // if is auto refresh do nothing, wait scroller stop
         if (mScrollChecker.mIsRunning && isAutoRefresh()) {
@@ -715,7 +764,7 @@ public class PtrFrameLayout extends ViewGroup {
 
         mFlag |= atOnce ? FLAG_AUTO_REFRESH_AT_ONCE : FLAG_AUTO_REFRESH_BUT_LATER;
 
-        mStatus = PTR_STATUS_PREPARE;
+        mStatus = PTR_STATUS_PREPARE_HEADER;
         if (mPtrUIHandlerHolder.hasHeaderHandler()) {
             mPtrUIHandlerHolder.onUIRefreshPrepare(this);
             if (DEBUG) {
@@ -724,7 +773,7 @@ public class PtrFrameLayout extends ViewGroup {
         }
         mScrollChecker.tryToScrollTo(mPtrIndicator.getHeaderOffsetToRefresh(), duration);
         if (atOnce) {
-            mStatus = PTR_STATUS_LOADING;
+            mStatus = PTR_STATUS_LOADING_HEADER;
             performRefresh();
         }
     }
@@ -916,6 +965,10 @@ public class PtrFrameLayout extends ViewGroup {
 
     public void setPullToRefresh(boolean pullToRefresh) {
         mPullToRefresh = pullToRefresh;
+    }
+
+    public byte getStatus() {
+        return mStatus;
     }
 
     @SuppressWarnings({"unused"})

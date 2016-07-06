@@ -222,7 +222,7 @@ public class PtrDemoHomeFragment extends BlockMenuFragment {
         ptrFrameLayout.setPtrHandler(new PtrHandler() {
             @Override
             public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View target) {
-                return PtrDefaultHandler.checkContentCanBePulledDown(frame, content, target);
+                return PtrDefaultHandler.checkContentCanBePull(frame, content, target);
             }
 
             @Override

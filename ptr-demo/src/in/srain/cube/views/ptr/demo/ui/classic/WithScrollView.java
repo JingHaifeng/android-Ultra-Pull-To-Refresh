@@ -29,7 +29,7 @@ public class WithScrollView extends TitleBaseFragment {
         mPtrFrame.setPtrHandler(new PtrHandler() {
             @Override
             public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View target) {
-                return PtrDefaultHandler.checkContentCanBePulledDown(frame, mScrollView, target);
+                return PtrDefaultHandler.checkContentCanBePull(frame, mScrollView, target);
             }
 
             @Override

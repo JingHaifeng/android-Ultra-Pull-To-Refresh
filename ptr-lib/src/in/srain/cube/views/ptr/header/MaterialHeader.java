@@ -165,7 +165,7 @@ public class MaterialHeader extends View implements PtrUIHandler {
 
         float percent = Math.min(1f, ptrIndicator.getCurrentPercent());
 
-        if (status == PtrFrameLayout.PTR_STATUS_PREPARE) {
+        if (status == PtrFrameLayout.PTR_STATUS_PREPARE_HEADER) {
             mDrawable.setAlpha((int) (255 * percent));
             mDrawable.showArrow(true);
 

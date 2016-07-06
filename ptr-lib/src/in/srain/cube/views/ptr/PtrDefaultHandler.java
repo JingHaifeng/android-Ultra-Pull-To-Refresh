@@ -44,13 +44,13 @@ public abstract class PtrDefaultHandler implements PtrHandler {
      * @param target
      * @return
      */
-    public static boolean checkContentCanBePulledDown(PtrFrameLayout frame, View content, View target) {
+    public static boolean checkContentCanBePull(PtrFrameLayout frame, View content, View target) {
         if (frame.isRefreshing()) {
             return false;
         }
-        if (frame.getHeaderView() == target) {
+        if (frame.getHeaderView() != null && frame.getHeaderView() == target) {
             return !canChildScrollUp(content);
-        } else if (frame.getFooterView() == target){
+        } else if (frame.getFooterView() != null && frame.getFooterView() == target){
             return !canChildScrollDown(content);
         }
         return false;
@@ -58,6 +58,6 @@ public abstract class PtrDefaultHandler implements PtrHandler {
 
     @Override
     public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View target) {
-        return checkContentCanBePulledDown(frame, content, target);
+        return checkContentCanBePull(frame, content, target);
     }
 }

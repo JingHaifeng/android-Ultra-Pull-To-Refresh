@@ -36,7 +36,7 @@ public class WithWebView extends TitleBaseFragment {
         mPtrFrame.setPtrHandler(new PtrHandler() {
             @Override
             public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View target) {
-                return PtrDefaultHandler.checkContentCanBePulledDown(frame, mWebView, target);
+                return PtrDefaultHandler.checkContentCanBePull(frame, mWebView, target);
             }
 
             @Override

@@ -26,6 +26,7 @@ public class EvenOnlyATextView extends TitleBaseFragment {
         ptrFrame.setFooterView(footer);
         ptrFrame.addPtrUIHeaderHandler(header);
         ptrFrame.addPtrUIFooterHandler(footer);
+        ptrFrame.setLoadingMinTime(0);
         ptrFrame.setPtrHandler(new PtrDefaultHandler() {
             @Override
             public void onRefreshBegin(PtrFrameLayout frame) {

@@ -65,7 +65,7 @@ public class WithListView extends TitleBaseFragment {
 
             @Override
             public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View target) {
-                return PtrDefaultHandler.checkContentCanBePulledDown(frame, content, target);
+                return PtrDefaultHandler.checkContentCanBePull(frame, content, target);
             }
         });
         // the following are default settings

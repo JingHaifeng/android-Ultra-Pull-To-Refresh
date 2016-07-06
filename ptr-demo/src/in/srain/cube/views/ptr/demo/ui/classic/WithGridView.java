@@ -74,7 +74,7 @@ public class WithGridView extends TitleBaseFragment {
             @Override
             public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View target) {
                 if (target == mPtrFrame.getHeader())
-                return PtrDefaultHandler.checkContentCanBePulledDown(frame, content, target);
+                return PtrDefaultHandler.checkContentCanBePull(frame, content, target);
                 else return false;
             }
         });

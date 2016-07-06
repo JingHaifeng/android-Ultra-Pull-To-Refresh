@@ -9,7 +9,6 @@ class PtrUIHandlerHolder implements PtrUIHandler {
 
     private PtrUIHandler mHeaderHandler;
     private PtrUIHandler mFooterHandler;
-    private PtrUIHandlerHolder mNext;
 
     private boolean containsHeader(PtrUIHandler handler) {
         return mHeaderHandler != null && mHeaderHandler == handler;
@@ -49,29 +48,7 @@ class PtrUIHandlerHolder implements PtrUIHandler {
         }
         if (null == holder.mHeaderHandler) {
             holder.mHeaderHandler = handler;
-            return;
         }
-
-        PtrUIHandlerHolder current = holder;
-        for (; ; current = current.mNext) {
-
-            if (current.mNext == null) {
-                break;
-            }
-            // duplicated
-            if (current.mHeaderHandler == null) {
-                current.mHeaderHandler = handler;
-                return;
-            }
-
-            if (current.containsHeader(handler)) {
-                return;
-            }
-        }
-
-        PtrUIHandlerHolder newHolder = new PtrUIHandlerHolder();
-        newHolder.mHeaderHandler = handler;
-        current.mNext = newHolder;
     }
 
 
@@ -85,30 +62,7 @@ class PtrUIHandlerHolder implements PtrUIHandler {
         }
         if (null == holder.mFooterHandler) {
             holder.mFooterHandler = handler;
-            return;
         }
-
-        PtrUIHandlerHolder current = holder;
-        for (; ; current = current.mNext) {
-
-            if (current.mNext == null) {
-                break;
-            }
-
-            if (current.mFooterHandler == null) {
-                current.mFooterHandler = handler;
-                return;
-            }
-
-            // duplicated
-            if (current.containsFooter(handler)) {
-                return;
-            }
-        }
-
-        PtrUIHandlerHolder newHolder = new PtrUIHandlerHolder();
-        newHolder.mFooterHandler = handler;
-        current.mNext = newHolder;
     }
 
 
@@ -121,38 +75,8 @@ class PtrUIHandlerHolder implements PtrUIHandler {
         if (head == null || handler == null) {
             return head;
         }
-
-        PtrUIHandlerHolder current = head;
-        PtrUIHandlerHolder pre = null;
-        do {
-
-            // delete current: link pre to next, unlink next from current;
-            // pre will no change, current move to next element;
-            if (current.containsHeader(handler)) {
-                current.mHeaderHandler = null;
-                if (current.mFooterHandler == null) {
-                    // current is head
-                    if (pre == null) {
-                        head = current.mNext;
-                        current.mNext = null;
-
-                        current = head;
-                    } else {
-
-                        pre.mNext = current.mNext;
-                        current.mNext = null;
-                        current = pre.mNext;
-                    }
-                }
-            } else {
-                pre = current;
-                current = current.mNext;
-            }
-
-        } while (current != null);
-
-        if (head == null) {
-            head = new PtrUIHandlerHolder();
+        if (head.containsHeader(handler)) {
+            head.mHeaderHandler = null;
         }
         return head;
     }
@@ -160,38 +84,8 @@ class PtrUIHandlerHolder implements PtrUIHandler {
         if (head == null || handler == null) {
             return head;
         }
-
-        PtrUIHandlerHolder current = head;
-        PtrUIHandlerHolder pre = null;
-        do {
-
-            // delete current: link pre to next, unlink next from current;
-            // pre will no change, current move to next element;
-            if (current.containsFooter(handler)) {
-                current.mFooterHandler = null;
-                if (current.mHeaderHandler == null) {
-                    // current is head
-                    if (pre == null) {
-                        head = current.mNext;
-                        current.mNext = null;
-
-                        current = head;
-                    } else {
-
-                        pre.mNext = current.mNext;
-                        current.mNext = null;
-                        current = pre.mNext;
-                    }
-                }
-            } else {
-                pre = current;
-                current = current.mNext;
-            }
-
-        } while (current != null);
-
-        if (head == null) {
-            head = new PtrUIHandlerHolder();
+        if (head.containsFooter(handler)) {
+            head.mFooterHandler = null;
         }
         return head;
     }
@@ -199,17 +93,15 @@ class PtrUIHandlerHolder implements PtrUIHandler {
     @Override
     public void onUIReset(PtrFrameLayout frame) {
         PtrUIHandlerHolder current = this;
-        do {
-            final PtrUIHandler headerHandler = current.getHeaderHandler();
-            final PtrUIHandler footerHandler = current.getFooterHandler();
-            if (frame.getPtrIndicator().isPullDown())
-            if (null != headerHandler) {
-                headerHandler.onUIReset(frame);
-            }
-            if (null != footerHandler) {
-                footerHandler.onUIReset(frame);
-            }
-        } while ((current = current.mNext) != null);
+        final PtrUIHandler headerHandler = current.getHeaderHandler();
+        final PtrUIHandler footerHandler = current.getFooterHandler();
+        if (isHeaderTask(frame.getStatus()))
+        if (null != headerHandler) {
+            headerHandler.onUIReset(frame);
+        }
+        if (null != footerHandler) {
+            footerHandler.onUIReset(frame);
+        }
     }
 
     @Override
@@ -218,73 +110,71 @@ class PtrUIHandlerHolder implements PtrUIHandler {
             return;
         }
         PtrUIHandlerHolder current = this;
-        do {
-            final PtrUIHandler headerHandler = current.getHeaderHandler();
-            final PtrUIHandler footerHandler = current.getFooterHandler();
-            if (frame.getPtrIndicator().isPullDown()) {
-                if (null != headerHandler) {
-                    headerHandler.onUIRefreshPrepare(frame);
-                }
-            }else {
-                if (null != footerHandler) {
-                    footerHandler.onUIRefreshPrepare(frame);
-                }
+        final PtrUIHandler headerHandler = current.getHeaderHandler();
+        final PtrUIHandler footerHandler = current.getFooterHandler();
+        if (isHeaderTask(frame.getStatus())) {
+            if (null != headerHandler) {
+                headerHandler.onUIRefreshPrepare(frame);
             }
-        } while ((current = current.mNext) != null);
+        }else {
+            if (null != footerHandler) {
+                footerHandler.onUIRefreshPrepare(frame);
+            }
+        }
     }
 
     @Override
     public void onUIRefreshBegin(PtrFrameLayout frame) {
         PtrUIHandlerHolder current = this;
-        do {
-            final PtrUIHandler headerHandler = current.getHeaderHandler();
-            final PtrUIHandler footerHandler = current.getFooterHandler();
-            if (frame.getPtrIndicator().isPullDown()) {
-                if (null != headerHandler) {
-                    headerHandler.onUIRefreshBegin(frame);
-                }
-            } else {
-                if (null != footerHandler) {
-                    footerHandler.onUIRefreshBegin(frame);
-                }
+        final PtrUIHandler headerHandler = current.getHeaderHandler();
+        final PtrUIHandler footerHandler = current.getFooterHandler();
+        if (isHeaderTask(frame.getStatus())) {
+            if (null != headerHandler) {
+                headerHandler.onUIRefreshBegin(frame);
             }
-        } while ((current = current.mNext) != null);
+        } else {
+            if (null != footerHandler) {
+                footerHandler.onUIRefreshBegin(frame);
+            }
+        }
     }
 
     @Override
     public void onUIRefreshComplete(PtrFrameLayout frame) {
         PtrUIHandlerHolder current = this;
-        do {
-            final PtrUIHandler headerHandler = current.getHeaderHandler();
-            final PtrUIHandler footerHandler = current.getFooterHandler();
-            if (frame.getPtrIndicator().isPullDown()) {
-                if (null != headerHandler) {
-                    headerHandler.onUIRefreshComplete(frame);
-                }
-            } else {
-                if (null != footerHandler) {
-                    footerHandler.onUIRefreshComplete(frame);
-                }
+        final PtrUIHandler headerHandler = current.getHeaderHandler();
+        final PtrUIHandler footerHandler = current.getFooterHandler();
+        if (isHeaderTask(frame.getStatus())) {
+            if (null != headerHandler) {
+                headerHandler.onUIRefreshComplete(frame);
             }
-        } while ((current = current.mNext) != null);
+        } else {
+            if (null != footerHandler) {
+                footerHandler.onUIRefreshComplete(frame);
+            }
+        }
     }
 
     @Override
     public void onUIPositionChange(PtrFrameLayout frame, boolean isUnderTouch, byte status, PtrIndicator ptrIndicator) {
         PtrUIHandlerHolder current = this;
-        do {
-            final PtrUIHandler headerHandler = current.getHeaderHandler();
-            final PtrUIHandler footerHandler = current.getFooterHandler();
-            if (ptrIndicator.isPullDown()) {
-                if (null != headerHandler) {
-                    headerHandler.onUIPositionChange(frame, isUnderTouch, status, ptrIndicator);
-                }
-            } else{
-                if (null != footerHandler) {
-                    footerHandler.onUIPositionChange(frame, isUnderTouch, status, ptrIndicator);
-                }
+        final PtrUIHandler headerHandler = current.getHeaderHandler();
+        final PtrUIHandler footerHandler = current.getFooterHandler();
+        if (isHeaderTask(frame.getStatus())) {
+            if (null != headerHandler) {
+                headerHandler.onUIPositionChange(frame, isUnderTouch, status, ptrIndicator);
             }
-        } while ((current = current.mNext) != null);
+        } else{
+            if (null != footerHandler) {
+                footerHandler.onUIPositionChange(frame, isUnderTouch, status, ptrIndicator);
+            }
+        }
+    }
+
+    private boolean isHeaderTask(int status) {
+        return status == PtrFrameLayout.PTR_STATUS_COMPLETE_HEADER ||
+               status == PtrFrameLayout.PTR_STATUS_PREPARE_HEADER ||
+               status == PtrFrameLayout.PTR_STATUS_LOADING_HEADER;
     }
 
 }

@@ -239,7 +239,8 @@ public class PtrClassicDefaultHeader extends FrameLayout implements PtrUIHandler
         final int lastPos =  Math.abs(ptrIndicator.getLastPosY());
 
         if (currentPos < mOffsetToRefresh && lastPos >= mOffsetToRefresh) {
-            if (isUnderTouch && status == PtrFrameLayout.PTR_STATUS_PREPARE) {
+            if (isUnderTouch && (status == PtrFrameLayout.PTR_STATUS_PREPARE_FOOTER ||
+            status == PtrFrameLayout.PTR_STATUS_PREPARE_FOOTER)) {
                 crossRotateLineFromBottomUnderTouch(frame);
                 if (mRotateView != null) {
                     mRotateView.clearAnimation();
@@ -247,7 +248,8 @@ public class PtrClassicDefaultHeader extends FrameLayout implements PtrUIHandler
                 }
             }
         } else if (currentPos > mOffsetToRefresh && lastPos <= mOffsetToRefresh) {
-            if (isUnderTouch && status == PtrFrameLayout.PTR_STATUS_PREPARE) {
+            if (isUnderTouch &&  (status == PtrFrameLayout.PTR_STATUS_PREPARE_FOOTER ||
+                                  status == PtrFrameLayout.PTR_STATUS_PREPARE_FOOTER)) {
                 crossRotateLineFromTopUnderTouch(frame);
                 if (mRotateView != null) {
                     mRotateView.clearAnimation();

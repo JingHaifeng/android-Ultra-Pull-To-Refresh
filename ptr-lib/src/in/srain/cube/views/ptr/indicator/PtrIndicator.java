@@ -171,15 +171,31 @@ public class PtrIndicator {
         return mLastPos == POS_START && hasLeftStartPosition();
     }
 
+    public boolean hasJustPullDown(){
+        return hasJustLeftStartPosition() && mCurrentPos > 0;
+    }
+
+    public boolean hasJustPullUp() {
+        return hasJustLeftStartPosition() && mCurrentPos < 0;
+    }
+
     public boolean hasJustBackToStartPosition() {
         return mLastPos != POS_START && isInStartPosition();
     }
 
     public boolean isOverOffsetToRefresh() {
         if (mCurrentPos > 0) {
+            if (mHeaderHeight == 0 || mHeaderOffsetToRefresh == 0) {
+                return false;
+            }
             return mCurrentPos >= getHeaderOffsetToRefresh();
-        } else {
+        } else if (mCurrentPos < 0){
+            if (mFooterHeight == 0 || mFooterOffsetToRefresh == 0) {
+                return false;
+            }
             return Math.abs(mCurrentPos) >= getFooterOffsetToRefresh();
+        } else {
+            return false;
         }
     }
 
@@ -194,21 +210,25 @@ public class PtrIndicator {
     public boolean crossRefreshLine() {
         if (mCurrentPos > 0) {
             return mLastPos < getHeaderOffsetToRefresh() && mCurrentPos >= getHeaderOffsetToRefresh();
-        } else {
+        } else if (mCurrentPos < 0){
             return Math.abs(mLastPos) < getFooterOffsetToRefresh() && Math.abs(mCurrentPos) >= getFooterOffsetToRefresh();
+        } else {
+            return false;
         }
     }
 
     public boolean hasJustReachedHeight() {
         if (mCurrentPos > 0) {
             return mLastPos < getHeaderOffsetToRefresh() && mCurrentPos >= mHeaderHeight;
-        } else {
+        } else if (mCurrentPos < 0){
             return Math.abs(mLastPos) < getFooterOffsetToRefresh() && Math.abs(mCurrentPos) >= mFooterHeight;
+        } else {
+            return false;
         }
     }
 
     public boolean isOverOffsetToKeepHeaderWhileLoading() {
-        return Math.abs(mCurrentPos) > getOffsetToKeepHeaderWhileLoading();
+        return Math.abs(mCurrentPos) > Math.abs(getOffsetToKeepHeaderWhileLoading());
     }
 
     public void setOffsetToKeepHeaderWhileLoading(int offset) {
@@ -249,6 +269,6 @@ public class PtrIndicator {
     }
 
     public boolean isPullDown() {
-        return mLastPos > 0 || mCurrentPos > 0;
+        return mLastPos > 0 || mCurrentPos >= 0;
     }
 }

@@ -80,7 +80,7 @@ public class WithListViewAndEmptyView extends TitleBaseFragment {
             public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View target) {
 
                 // here check $mListView instead of $content
-                return PtrDefaultHandler.checkContentCanBePulledDown(frame, mListView, target);
+                return PtrDefaultHandler.checkContentCanBePull(frame, mListView, target);
             }
 
             @Override
